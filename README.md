@@ -693,8 +693,24 @@ curl --request POST 'http://127.0.0.1/waf/config/reload' \
 
 [https://www.cnblogs.com/liekkas01/p/12728712.html](https://www.cnblogs.com/liekkas01/p/12728712.html)
 
+## 9 如何开发
 
-## 9. 一些相关链接
+```shell
+// 环境建立
+git clone https://github.com/codiy1992/lua-resty-waf.git
+cd lua-resty-waf
+touch .opmrc
+docker-compose up -d
+
+// 编码
+...
+
+// 打包
+docker exec -it resty opm build
+docker exec -it resty opm upload
+```
+
+## 10. 一些相关链接
 
 * OpenResty LuaJIT2 [https://github.com/openresty/luajit2#tablenkeys](https://github.com/openresty/luajit2#tablenkeys)
 * Lua 手册[Lua 5.4](https://www.lua.org/manual/5.4/)
