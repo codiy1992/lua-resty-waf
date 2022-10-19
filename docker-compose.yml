@@ -1,0 +1,31 @@
+version: "3.5"
+
+networks:
+  backend:
+    driver: bridge
+
+services:
+  resty:
+    image: resty
+    container_name: resty
+    build:
+      context: ./
+    volumes:
+      - ${PWD}:/data
+      - ${PWD}/lib:/usr/local/openresty/nginx/lua
+      - ${PWD}/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ${PWD}/sites.d:/usr/local/openresty/nginx/conf/sites.d
+      - ${PWD}/.opmrc:/root/.opmrc
+    privileged: true
+    ports:
+      - 8080:80
+    networks:
+      - backend
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - 6379:6379
+    networks:
+      - backend
