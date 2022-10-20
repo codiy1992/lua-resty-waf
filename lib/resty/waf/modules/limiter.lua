@@ -15,7 +15,7 @@ function _M.run(config)
         return
     end
 
-    local matcher_list = config.matcher
+    local matcher_list = config.matchers
 
     for i, rule in ipairs( config.modules.limiter.rules ) do
         local enable = rule['enable']
@@ -118,7 +118,7 @@ end
 
 function _M.response(config, rule)
     require('resty.waf.modules.counter').run(config, 'limited')
-    local response_list = config.response
+    local response_list = config.responses
     response = response_list[tostring(rule['code'] or nil)]
     if response ~= nil then
         ngx.status = tonumber(response['status'] or ngx.HTTP_FORBIDDEN)

@@ -35,7 +35,7 @@ local _M = {
             },
         },
     },
-    ["matcher"] = {
+    ["matchers"] = {
         ["any"] = {
 
         },
@@ -95,7 +95,7 @@ local _M = {
             }
         }
     },
-    ["response"] = {
+    ["responses"] = {
         ["403"] = {
             ["status"] = 403,
             ["mime_type"] = "application/json",

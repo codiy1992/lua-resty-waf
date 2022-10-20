@@ -11,9 +11,7 @@ function _M.run(config)
     if config.modules.filter.enable ~= true then
         return
     end
-    local matcher_list = config.matcher
-    local response_list = config.response
-    local response = nil
+    local matcher_list = config.matchers
 
     for i,rule in ipairs(config.modules.filter.rules) do
         local enable = rule['enable']
@@ -85,7 +83,7 @@ end
 
 function _M.response(config, rule)
     require('resty.waf.modules.counter').run(config, 'filtered')
-    local response_list = config.response
+    local response_list = config.responses
     response = response_list[tostring(rule['code'] or nil)]
     if response ~= nil then
         ngx.status = tonumber(response['status'] or ngx.HTTP_FORBIDDEN)

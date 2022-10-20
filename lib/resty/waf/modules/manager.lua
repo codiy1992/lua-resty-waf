@@ -41,7 +41,7 @@ function _M.config_set(config)
     local inputs, err = require('cjson.safe').decode(ngx.req.get_body_data() or '{}')
     if inputs == nil then comm.error(err) end
     local keys = {
-        "matcher", "response", "modules:manager:auth",
+        "matchers", "responses", "modules:manager:auth",
         "modules:filter:rules", "modules:limiter:rules", "modules:counter:rules",
         "modules:filter:enable", "modules:limiter:enable", "modules:counter:enable"
     }
@@ -82,7 +82,7 @@ function _M.config_set(config)
                 if value['matcher'] == nil or type(value['matcher']) ~= 'string' then
                     comm.error('Required rule.matcher in module: ' .. module)
                 end
-                if config['matcher'][value['matcher']] == nil then
+                if config['matchers'][value['matcher']] == nil then
                     comm.error('Unexpected rule.matcher `' .. value['matcher'] ..'` found in module: ' .. module)
                 end
                 -- validate by

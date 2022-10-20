@@ -23,10 +23,10 @@ http {
     access_by_lua_block {
         local waf = require("resty.waf")
         waf.run({
+            "manager",
             "filter",
             "limiter",
             "counter",
-            "manager",
         })
     }
 }
@@ -47,8 +47,8 @@ http {
 ## 3. 配置的结构
 
 配置由三大部分组成如下
-* `matcher` 一些匹配规则, 可在各模块间共用, 用于匹配特定请求
-* `response` 自定义响应格式, 可在各模块间共用, 用于waf模块内的http响应
+* `matchers` 一些匹配规则, 可在各模块间共用, 用于匹配特定请求
+* `responses` 自定义响应格式, 可在各模块间共用, 用于waf模块内的http响应
 * `modules` 模块配置, 包含 `filter`, `limiter`, `counter`, `manager` 四大模块
 
 ### 3.1 Matcher
@@ -314,7 +314,7 @@ curl --location --request GET 'http://127.0.0.1/waf/module/counter' \
 
 ```json
 {
-    "matcher": {
+    "matchers": {
         "attack_sql": {
             "Args": {
                 "operator": "≈",
@@ -372,7 +372,7 @@ curl --location --request GET 'http://127.0.0.1/waf/module/counter' \
             }
         }
     },
-    "response": {
+    "responses": {
         "403": {
             "status": 403,
             "mime_type": "application/json",
@@ -493,7 +493,7 @@ curl --location --request GET 'http://127.0.0.1/waf/module/counter' \
 
 配置合并的规则:
 1. 对于模块的`rules`配置, 只要设置了就会完全替换默认配置, 否则保留默认配置
-2. 对于`matcher`,`response`等采用 **修改原有** + **新增** 的方式进行合并, 会保留已经存在的默认配置
+2. 对于`matchers`,`responses`等采用 **修改原有** + **新增** 的方式进行合并, 会保留已经存在的默认配置
 
 ```shell
 curl --request POST 'http://127.0.0.1/waf/config' \
@@ -550,8 +550,8 @@ curl --location --request POST 'http://127.0.0.1/waf/list' \
 
 * config存放在 redis 中以 `waf:config:` 为开头的`hset` 中
 * 目前支持几个配置项, 
-    * **`waf:config:matcher`**
-    * **`waf:config:response`**
+    * **`waf:config:matchers`**
+    * **`waf:config:responses`**
     * **`waf:config:moduules:manager.auth`**
     * **`waf:config:moduules:filter:rules`**
     * **`waf:config:moduules:limiter:rules`**
@@ -602,9 +602,9 @@ curl --request POST 'http://127.0.0.1/waf/list/reload' \
 
 ```shell
 // 匹配头部参数 X-App-ID = 4 的请求
-hset waf:config:matcher app_id '{"Header":{"operator":"#","name":"x-app-id","value":[4]}}'
+hset waf:config:matchers app_id '{"Header":{"operator":"#","name":"x-app-id","value":[4]}}'
 // 匹配 UserAgent 包含 "postman" 的请求
-hset waf:config:matcher attack_agent '{"UserAgent":{"value":"(postman)","operator":"≈"}}'
+hset waf:config:matchers attack_agent '{"UserAgent":{"value":"(postman)","operator":"≈"}}'
 // 重载配置
 curl --request POST 'http://127.0.0.1/waf/config/reload' \
 --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='
@@ -613,7 +613,7 @@ curl --request POST 'http://127.0.0.1/waf/config/reload' \
 
 ```shell
 // Redis 命令
-hset waf:config:response 503 '{"status":503,"mime_type":"application/json","body":"{\"code\":\"503\", \"message\":\"Custom Message\"}"}'
+hset waf:config:responses 503 '{"status":503,"mime_type":"application/json","body":"{\"code\":\"503\", \"message\":\"Custom Message\"}"}'
 // 重载配置
 curl --request POST 'http://127.0.0.1/waf/config/reload' \
     --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='

@@ -18,7 +18,7 @@ function _M.reload_config()
     local config = require('resty.waf.config');
     redis.exec(function (rds, config)
         local keys = {
-            "matcher", "response", "modules:manager:auth",
+            "matchers", "responses", "modules:manager:auth",
             "modules:filter:rules", "modules:limiter:rules", "modules:counter:rules",
             "modules:filter", "modules:limiter", "modules:counter"
         }
@@ -73,7 +73,7 @@ function _M.reload_config()
                 if value['matcher'] == nil or type(value['matcher']) ~= 'string' then
                     goto next
                 end
-                if config['matcher'][value['matcher']] == nil then
+                if config['matchers'][value['matcher']] == nil then
                     goto next
                 end
                 -- validate by

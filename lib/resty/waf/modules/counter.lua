@@ -15,7 +15,7 @@ function _M.run(config, group)
         return
     end
 
-    local matcher_list = config.matcher
+    local matcher_list = config.matchers
 
     if group == nil or type(group) ~= 'string' or group == '' then
         group = 'accepted'
