@@ -565,7 +565,7 @@ curl --location --request POST 'http://127.0.0.1/waf/list' \
 ### 5.2 自定义配置list
 
 * 自定义的list放在 redis 中以 **`waf:list`** 为key的 `zset` 中
-* 如在`redis`中执行命令 **`zadd waf:list 86400 127.0.0.1`**
+* 如在`redis`中执行命令 **`zadd waf:list 1666267510 127.0.0.1`**
 * 在 redis 配置后需执行 **`/waf/list/reload`** 将配置与当前共享内存名单合并后生效
 
 ## 6. 应用场景示范
@@ -574,10 +574,10 @@ curl --location --request POST 'http://127.0.0.1/waf/list' \
 
 **示例一: 限制访问**(默认配置已经在`filter`模块中开启了对`list`名单的支持, 默认为黑名单)
 ```shell
-// 限制设备号`X-Device-ID` = `f14268d542f919d5` 访问, 时间为 86400 秒
-zadd waf:list 86400 f14268d542f919d5
-// 限制IP `13.251.156.174` 的访问, 时间为 3600 秒
-zadd waf:list 3600 13.251.156.174
+// 限制设备号`X-Device-ID` = `f14268d542f919d5` 访问, 在到达Unix time 1666267510 之前
+zadd waf:list 1666267510 f14268d542f919d5
+// 限制IP `13.251.156.174` 的访问, 在到达Unix time 1666267510 之前
+zadd waf:list 1666267510 13.251.156.174
 // 重载配置
 curl --request POST 'http://127.0.0.1/waf/list/reload' \
     --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='
@@ -588,7 +588,7 @@ curl --request POST 'http://127.0.0.1/waf/list/reload' \
 ```shell
 hset waf:config:moduules:filter:rules 1 '{"matcher":"any","action":"accept","enable":true,"by":"ip:in_list"}'
 hset waf:config:moduules:filter:rules 0 '{"matcher":"any","action":"block","enable":true,"by":"ip:not_in_list"}'
-zadd waf:list 86400 13.251.156.174
+zadd waf:list 1666267510 13.251.156.174
 ```
 重载配置及名单后生效
 ```shell
