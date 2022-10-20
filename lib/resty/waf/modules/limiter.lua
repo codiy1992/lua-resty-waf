@@ -49,6 +49,8 @@ function _M.run(config)
                             goto continue
                         end
                         key = key..'device:'.. device_id .. ';'
+                    else
+                        goto continue
                     end
                 end
             end

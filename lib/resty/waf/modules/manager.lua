@@ -37,48 +37,95 @@ end
 
 function _M.config_set(config)
     local inputs, err = require('cjson.safe').decode(ngx.req.get_body_data() or '{}')
-    if inputs == nil then
-        ngx.say('{"code": 422, "message":' .. err .. '}')
-        return
-    end
+    if inputs == nil then comm.error(err) end
     local keys = {
-        "matcher", "response", "modules.manager.auth",
-        "modules.filter.rules", "modules.limiter.rules", "modules.counter.rules",
-        "modules.filter.enable", "modules.limiter.enable", "modules.counter.enable"
+        "matcher", "response", "modules:manager:auth",
+        "modules:filter:rules", "modules:limiter:rules", "modules:counter:rules",
+        "modules:filter:enable", "modules:limiter:enable", "modules:counter:enable"
     }
     for i,key in pairs(keys) do
-        local last_field = nil
+        local field = nil
+        local module = nil
         local sub_inputs = inputs
         local sub_config = config
-        for field in string.gmatch(key, "%w+") do
-            if field == 'enable' and sub_inputs[field] ~= nil then
-                sub_config[field] = sub_inputs[field]
+        for v in string.gmatch(key, "%w+") do
+            if v == 'enable' and sub_inputs[v] ~= nil then
+                sub_config[v] = sub_inputs[v]
                 goto continue
             end
-            sub_inputs = sub_inputs[field]
-            sub_config = sub_config[field]
+            sub_inputs = sub_inputs[v]
+            sub_config = sub_config[v]
             if sub_inputs == nil then
                 goto continue
             end
-            last_field = field
+            if comm.in_array(v, {'filter', 'limiter', 'counter'}) then
+                module = v
+            end
+            field = v
         end
+
         if type(sub_inputs) ~= 'table' then
             goto continue
         end
+
+        if field == 'rules' then
+            for pos,rule in pairs(sub_config) do
+                sub_config[pos] = nil
+            end
+        end
+
         for name,value in pairs(sub_inputs) do
-            if last_field == 'rules' then
-                for pos,rule in ipairs(sub_config) do
-                    if rule['matcher'] == value['matcher'] then
-                        if rule['by'] ~= nil then
-                            if rule['by'] == value['by'] then
-                                table.remove(sub_config, pos)
-                            end
-                        else
-                            table.remove(sub_config, pos)
+            if field == 'rules' then
+                -- validate matcher
+                if value['matcher'] == nil or type(value['matcher']) ~= 'string' then
+                    comm.error('Required rule.matcher in module: ' .. module)
+                end
+                if config['matcher'][value['matcher']] == nil then
+                    comm.error('Unexpected rule.matcher `' .. value['matcher'] ..'` found in module: ' .. module)
+                end
+                -- validate by
+                if comm.in_array(module, {'limiter', 'counter'}) then
+                    if value['by'] == nil or type(value['by']) ~= 'string' or value['by'] == '' then
+                        comm.error('Required rule.by in module: ' .. module)
+                    end
+                end
+                if comm.in_array(module, {'filter'}) then
+                    if value['by'] ~= nil and type(value['by']) ~= 'string' then
+                        comm.error('Unexpected rule.by found in module: ' .. module)
+                    end
+                    if value['by'] ~= nil and type(value['by']) == 'string' then
+                        if comm.in_array(value['by'], {
+                            'ip:in_list', 'ip:not_in_list', 'device:in_list',
+                            'uid:in_list', 'uid:not_in_list', 'device:not_in_list'
+                        }) ~= true then
+                            comm.error('Unexpected rule.by `'.. value['by'] ..'` found in module: ' .. module)
                         end
                     end
                 end
-                table.insert(sub_config, value)
+                -- validate action
+                if comm.in_array(module, {'filter'}) then
+                    if value['action'] == nil or type(value['action']) ~= 'string' then
+                        comm.error('Required rule.action in module: ' .. module)
+                    end
+                    if comm.in_array(value['action'], {'block', 'accept'}) ~= true then
+                        comm.error('Unexpected rule.action `'.. value['action'] ..'` found in module: ' .. module)
+                    end
+                end
+                -- validate time
+                if comm.in_array(module, {'limiter', 'counter'}) then
+                    if value['time'] == nil or tonumber(value['time']) == nil then
+                        comm.error('Required rule.time in module: ' .. module)
+                    end
+                end
+                -- validate count
+                if comm.in_array(module, {'limiter'}) then
+                    if value['count'] == nil or tonumber(value['count']) == nil then
+                        comm.error('Required rule.count in module: ' .. module)
+                    end
+                end
+                if value['enable'] ~= nil and value['enable'] == true then
+                    table.insert(sub_config, value)
+                end
             else
                 sub_config[name] = value
             end
@@ -102,10 +149,7 @@ function _M.counter_get(config)
     local counter = ngx.shared.counter
     local data = {}
     local inputs, err = require('cjson.safe').decode(ngx.req.get_body_data() or '{}')
-    if inputs == nil then
-        ngx.say('{"code": 422, "message":' .. err .. '}')
-        return
-    end
+    if inputs == nil then comm.error(err) end
     local scale = 1024
     if inputs['scale'] ~= nil then
         scale = tonumber(inputs['scale'])
@@ -154,10 +198,7 @@ function _M.limiter_get(config)
     local limiter = ngx.shared.limiter
     local data = {}
     local inputs,err = require('cjson.safe').decode(ngx.req.get_body_data() or '{}')
-    if inputs == nil then
-        ngx.say('{"code": 422, "message":' .. err .. '}')
-        return
-    end
+    if inputs == nil then comm.error(err) end
     local scale = 1024
     if inputs['scale'] ~= nil then
         scale = tonumber(inputs['scale'])
@@ -258,10 +299,7 @@ function _M.list_get()
     local list = ngx.shared.list
     local data = {}
     local inputs, err = require('cjson.safe').decode(ngx.req.get_body_data() or '{}')
-    if inputs == nil then
-        ngx.say('{"code": 422, "message":' .. err .. '}')
-        return
-    end
+    if inputs == nil then comm.error(err) end
     local scale = 1024
     if inputs['scale'] ~= nil then
         scale = tonumber(inputs['scale'])
@@ -309,10 +347,7 @@ function _M.list_set()
     local list = ngx.shared.list
     local data = {}
     local inputs, err  = require('cjson.safe').decode(ngx.req.get_body_data() or '{}')
-    if inputs == nil then
-        ngx.say('{"code": 422, "message":' .. err .. '}')
-        return
-    end
+    if inputs == nil then comm.error(err) end
     for identifier,v in pairs(inputs) do
         local ttl = tonumber(v)
         if ttl == nil or ttl <= 0 then

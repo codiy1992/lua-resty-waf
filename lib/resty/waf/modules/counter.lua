@@ -36,6 +36,8 @@ function _M.run(config)
                         key = key .. "uid:" .. comm.get_user_id() .. ';'
                     elseif by == 'uri' then
                         key = key .. "uri:" .. ngx.var.uri .. ';'
+                    else
+                        goto continue
                     end
                 end
             else

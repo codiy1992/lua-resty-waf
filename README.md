@@ -489,7 +489,11 @@ curl --location --request GET 'http://127.0.0.1/waf/module/counter' \
 
 ### 4.1 自定义配置config
 
-自定义配置将以**覆盖模式**和默认配置**合并**, **在nginx重启或者通过接口`/waf/config/reload`重载配置后失效**
+自定义配置将以和默认配置**合并**, **在nginx重启或者通过接口`/waf/config/reload`重载配置后失效**
+
+配置合并的规则:
+1. 对于模块的`rules`配置, 只要设置了就会完全替换默认配置, 否则保留默认配置
+2. 对于`matcher`,`response`等采用 **修改原有** + **新增** 的方式进行合并, 会保留已经存在的默认配置
 
 ```shell
 curl --request POST 'http://127.0.0.1/waf/config' \
@@ -540,18 +544,22 @@ curl --location --request POST 'http://127.0.0.1/waf/list' \
 
 ### 5.1 自定义配置config
 
+配置合并的规则:
+1. 对于模块的`rules`配置, 只要设置了就会完全替换默认配置, 否则保留默认配置
+2. 对于`matcher`,`response`等采用 **修改原有** + **新增** 的方式进行合并, 会保留已经存在的默认配置
+
 * config存放在 redis 中以 `waf:config:` 为开头的`hset` 中
 * 目前支持几个配置项, 
     * **`waf:config:matcher`**
     * **`waf:config:response`**
-    * **`waf:config:modules.manager.auth`**
-    * **`waf:config:modules.filter.rules`**
-    * **`waf:config:modules.limiter.rules`**
-    * **`waf:config:modules.counter.rules`**
-    * **`waf:config:modules.filter`**(仅支持对`enable`进行设置)
-    * **`waf:config:modules.limiter`**(仅支持对`enable`进行设置)
-    * **`waf:config:modules.counter`**(仅支持对`enable`进行设置)
-* 如在`redis`中执行命令 **`hset waf:config:modules.counter enable false`**
+    * **`waf:config:moduules:manager.auth`**
+    * **`waf:config:moduules:filter:rules`**
+    * **`waf:config:moduules:limiter:rules`**
+    * **`waf:config:moduules:counter:rules`**
+    * **`waf:config:moduules:filter`**(仅支持对`enable`进行设置)
+    * **`waf:config:moduules:limiter`**(仅支持对`enable`进行设置)
+    * **`waf:config:moduules:counter`**(仅支持对`enable`进行设置)
+* 如在`redis`中执行命令 **`hset waf:config:moduules:counter enable false`**
 * 在 redis 配置后需执行 **`/waf/config/reload`** 将配置与默认配置进行合并,方可生效
 
 ### 5.2 自定义配置list
@@ -578,8 +586,8 @@ curl --request POST 'http://127.0.0.1/waf/list/reload' \
 
 在 redis 中执行
 ```shell
-hset waf:config:modules.filter.rules 1 '{"matcher":"any","action":"accept","enable":true,"by":"ip:in_list"}'
-hset waf:config:modules.filter.rules 0 '{"matcher":"any","action":"block","enable":true,"by":"ip:not_in_list"}'
+hset waf:config:moduules:filter:rules 1 '{"matcher":"any","action":"accept","enable":true,"by":"ip:in_list"}'
+hset waf:config:moduules:filter:rules 0 '{"matcher":"any","action":"block","enable":true,"by":"ip:not_in_list"}'
 zadd waf:list 86400 13.251.156.174
 ```
 重载配置及名单后生效
@@ -594,7 +602,7 @@ curl --request POST 'http://127.0.0.1/waf/list/reload' \
 
 ```shell
 // 匹配头部参数 X-App-ID = 4 的请求
-hset waf:config:matcher app_id '{"Header":{"operator":"#","name_value":"x-app-id","value":[4],"name_operator":"="}}'
+hset waf:config:matcher app_id '{"Header":{"operator":"#","name":"x-app-id","value":[4]}}'
 // 匹配 UserAgent 包含 "postman" 的请求
 hset waf:config:matcher attack_agent '{"UserAgent":{"value":"(postman)","operator":"≈"}}'
 // 重载配置
@@ -610,41 +618,41 @@ hset waf:config:response 503 '{"status":503,"mime_type":"application/json","body
 curl --request POST 'http://127.0.0.1/waf/config/reload' \
     --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='
 ```
-### 6.4 modules.filter.rules
+### 6.4 moduules:filter:rules
 
 ```shell
 // Redis 命令
-hset waf:config:modules.filter.rules 0 '{"matcher":"any","action":"block","enable":true,"by":"ip:not_in_list"}'
+hset waf:config:moduules:filter:rules 0 '{"matcher":"any","action":"block","enable":true,"by":"ip:not_in_list"}'
 // 重载配置
 curl --request POST 'http://127.0.0.1/waf/config/reload' \
     --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='
 ```
 
-### 6.5 modules.limiter.rules
+### 6.5 moduules:limiter:rules
 
 ```shell
 // Redis 命令
-hset waf:config:modules.limiter.rules 0 '{"code":403,"count":60,"time":60,"matcher":"any","by":"ip","enable":true}'
+hset waf:config:moduules:limiter:rules 0 '{"code":403,"count":60,"time":60,"matcher":"any","by":"ip","enable":true}'
 // 重载配置
 curl --request POST 'http://127.0.0.1/waf/config/reload' \
     --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='
 ```
 
-### 6.6 modules.counter.rules
+### 6.6 moduules:counter:rules
 
 ```shell
 // Redis 命令
-hset waf:config:modules.counter.rules 0 '{"matcher":"any","by":"ip,uri","time":60,"enable":true}'
+hset waf:config:moduules:counter:rules 0 '{"matcher":"any","by":"ip,uri","time":60,"enable":true}'
 // 重载配置
 curl --request POST 'http://127.0.0.1/waf/config/reload' \
     --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='
 ```
 
-### 6.7 修改 modules.manager
+### 6.7 修改 moduules:manager
 
 ```shell
 // Redis 命令
-hset waf:config:modules.manager.auth '{"user": "test", "pass": "123" }'
+hset waf:config:moduules:manager:auth '{"user": "test", "pass": "123" }'
 // 重载配置
 curl --request POST 'http://127.0.0.1/waf/config/reload' \
     --header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ=='

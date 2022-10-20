@@ -44,7 +44,18 @@ function _M.response(response_list, code)
     end
 end
 
-function _M.contains( list, value )
+function _M.error(err)
+    data = {
+        ['code'] = ngx.HTTP_BAD_REQUEST,
+        ['message'] = err or 'Unknown Error'
+    }
+    ngx.status = ngx.HTTP_BAD_REQUEST
+    ngx.header.content_type = 'application/json'
+    ngx.say(require('cjson').encode(data))
+    ngx.exit(ngx.HTTP_BAD_REQUEST)
+end
+
+function _M.in_array( value, list )
     if type(list) == 'table' then
         for idx,item in ipairs( list ) do
             if item == value then
