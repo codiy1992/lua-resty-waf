@@ -25,7 +25,7 @@ function _M.run(config)
                     local client_ip = comm.get_client_ip()
                     if client_ip ~= nil and list:get(client_ip) ~= nil then
                         if action == 'block' then
-                            comm.response(response_list, rule['code'])
+                            _M.response(config, rule)
                         end
                     end
                     goto continue
@@ -33,7 +33,7 @@ function _M.run(config)
                     local client_ip = comm.get_client_ip()
                     if client_ip ~= nil and list:get(client_ip) == nil then
                         if action == 'block' then
-                            comm.response(response_list, rule['code'])
+                            _M.response(config, rule)
                         end
                     end
                     goto continue
@@ -41,7 +41,7 @@ function _M.run(config)
                     local device_id = comm.get_device_id()
                     if device_id ~= nil and list:get(string.lower(device_id)) ~= nil then
                         if action == 'block' then
-                            comm.response(response_list, rule['code'])
+                            _M.response(config, rule)
                         end
                     end
                     goto continue
@@ -49,7 +49,7 @@ function _M.run(config)
                     local device_id = comm.get_device_id()
                     if device_id ~= nil and list:get(string.lower(device_id)) == nil then
                         if action == 'block' then
-                            comm.response(response_list, rule['code'])
+                            _M.response(config, rule)
                         end
                     end
                     goto continue
@@ -57,7 +57,7 @@ function _M.run(config)
                     local uid = comm.get_user_id()
                     if uid ~= nil and list:get(string.lower(uid)) ~= nil then
                         if action == 'block' then
-                            comm.response(response_list, rule['code'])
+                            _M.response(config, rule)
                         end
                     end
                     goto continue
@@ -65,7 +65,7 @@ function _M.run(config)
                     local uid = comm.get_user_id()
                     if uid ~= nil and list:get(string.lower(uid)) == nil then
                         if action == 'block' then
-                            comm.response(response_list, rule['code'])
+                            _M.response(config, rule)
                         end
                     end
                     goto continue
@@ -76,11 +76,31 @@ function _M.run(config)
             if action ~= 'block' then
                 goto continue
             else
-                comm.response(response_list, rule['code'])
+                _M.response(config, rule)
             end
         end
         ::continue::
     end
+end
+
+function _M.response(config, rule)
+    require('resty.waf.modules.counter').run(config, 'filtered')
+    local response_list = config.response
+    response = response_list[tostring(rule['code'] or nil)]
+    if response ~= nil then
+        ngx.status = tonumber(response['status'] or ngx.HTTP_FORBIDDEN)
+        ngx.header.content_type = response['mime_type'] or 'application/json'
+        ngx.say( response['body'] or '{"code": 403, "message":"Forbidden"}')
+        ngx.exit(ngx.HTTP_OK)
+    end
+    data = {
+        ['code'] = ngx.HTTP_FORBIDDEN,
+        ['message'] = 'Forbidden'
+    }
+    ngx.status = ngx.HTTP_FORBIDDEN
+    ngx.header.content_type = 'application/json'
+    ngx.say(require('cjson').encode(data))
+    ngx.exit(ngx.HTTP_FORBIDDEN)
 end
 
 return _M

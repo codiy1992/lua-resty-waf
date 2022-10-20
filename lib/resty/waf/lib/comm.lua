@@ -32,18 +32,6 @@ function _M.get_user_id()
     return jwt_obj ~= nil and jwt_obj.payload ~= nil and jwt_obj.payload.sub or 0
 end
 
-function _M.response(response_list, code)
-    response = response_list[tostring(code)]
-    if response ~= nil then
-        ngx.status = tonumber(response['status'] or rule['code'])
-        ngx.header.content_type = response['mime_type']
-        ngx.say( response['body'] )
-        ngx.exit(ngx.HTTP_OK)
-    else
-        ngx.exit(ngx.HTTP_SERVICE_UNAVAILABLE)
-    end
-end
-
 function _M.error(err)
     data = {
         ['code'] = ngx.HTTP_BAD_REQUEST,
