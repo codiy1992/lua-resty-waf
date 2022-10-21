@@ -99,7 +99,7 @@ local _M = {
         ["403"] = {
             ["status"] = 403,
             ["mime_type"] = "application/json",
-            ["body"] = '{"code":"403", "message":"403 Forbidden"}',
+            ["body"] = '{"code":403, "message":"Forbidden"}',
         },
     },
 }
