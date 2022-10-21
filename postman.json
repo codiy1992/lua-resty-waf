@@ -1,0 +1,504 @@
+{
+	"info": {
+		"_postman_id": "dd52afc1-d5c8-4286-b7d2-b37867800d75",
+		"name": "lua-resty-waf",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2101586"
+	},
+	"item": [
+		{
+			"name": "[WAF状态]/waf/status",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					},
+					{
+						"key": "X-Device-ID",
+						"value": "f14268d542f919d5",
+						"type": "text"
+					},
+					{
+						"key": "X-App-ID",
+						"value": "1",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{resty}}/waf/status",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF配置]/waf/config",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					},
+					{
+						"key": "X-Device-ID",
+						"value": "f14268d542f919d5",
+						"type": "text"
+					},
+					{
+						"key": "X-App-ID",
+						"value": "4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{resty}}/waf/config",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF配置 - 临时更新]/waf/config",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					},
+					{
+						"key": "X-Device-ID",
+						"value": "f14268d542f919d5",
+						"type": "text"
+					},
+					{
+						"key": "X-App-ID",
+						"value": "4",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"responses\": {\n        \"403\": {\n            \"body\": \"{\\\"code\\\":\\\"403\\\", \\\"message\\\":\\\"403 Forbidden\\\"}\",\n            \"status\": 403,\n            \"mime_type\": \"application/json\"\n        },\n        \"503\": {}\n    },\n    \"matchers\": {\n        \"*\": {},\n        \"wan2\": {\n            \"IP\": {\n                \"operator\": \"!≈\",\n                \"value\": \"(10.|192.168|172.1[6-9].|172.2[0-9].|172.3[01].).*\"\n            }\n        },\n        \"waf\": {\n            \"URI\": {\n                \"value\": \"^/waf/\",\n                \"operator\": \"≈\"\n            }\n        }\n    },\n    \"modules\": {\n        \"filter\": {\n            \"rules\": [\n                {\n                    \"action\": \"block\",\n                    \"by\": \"ip:in_list\",\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"enable\": true\n                },\n                {\n                    \"action\": \"block\",\n                    \"by\": \"device:in_list\",\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"enable\": true\n                },\n                {\n                    \"action\": \"block\",\n                    \"by\": \"uid:in_list\",\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"enable\": true\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"attack_sql\"\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"attack_file_ext\"\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"attack_agent\"\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"app_id\"\n                },\n                {\n                    \"enable\": false,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"app_version\"\n                }\n            ],\n            \"enable\": true\n        },\n        \"limiter\": {\n            \"enable\": true,\n            \"rules\": [\n                {\n                    \"enable\": true,\n                    \"time\": 60,\n                    \"count\": 30,\n                    \"code\": 403,\n                    \"matcher\": \"any\",\n                    \"by\": \"ip\"\n                },\n                {\n                    \"enable\": true,\n                    \"time\": 60,\n                    \"count\": 10,\n                    \"code\": 503,\n                    \"matcher\": \"any\",\n                    \"by\": \"ip,uri\"\n                }\n            ]\n        },\n        \"counter\": {\n            \"enable\": true,\n            \"rules\": [\n                {\n                    \"matcher\": \"wan\",\n                    \"by\": \"ip,uri\",\n                    \"time\": 86400,\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"wan\",\n                    \"by\": \"ip\",\n                    \"time\": 86400,\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"waf\",\n                    \"by\": \"ip,uri\",\n                    \"time\": 60,\n                    \"enable\": true\n                }\n            ]\n        }\n    }\n}"
+				},
+				"url": {
+					"raw": "{{resty}}/waf/config",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF配置 - 重载]/waf/config/reload",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{resty}}/waf/config/reload",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"config",
+						"reload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF名单 - 列表]/waf/list",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"q\": \"\",\n    \"scale\": 1024,\n    \"ttl\": 60000\n}"
+				},
+				"url": {
+					"raw": "{{resty}}/waf/list",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF名单 - 编辑]/waf/list",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"127.0.0.1\": 600,\n    \"30000000\": 500,\n    \"f14268d542f919d5\": 60,\n    \"fan29snd19ns29s\": 2322,\n    \"asd-bbisd230-sad932-a299\": 1392\n}"
+				},
+				"url": {
+					"raw": "{{resty}}/waf/list",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF名单 - 刷新]/waf/list/reload",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{resty}}/waf/list/reload",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"list",
+						"reload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF计数器]/waf/module/counter",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xMjcuMC4wLjFcL3YxXC91c2VyXC9zaWduaW5cL2FjY291bnQiLCJpYXQiOjE1OTExNDcyNDgsImV4cCI6MTg1ODk4NzI0OCwibmJmIjoxNTkxMTQ3MjQ4LCJqdGkiOiJIdG82aEpuemlRS0FtT2pOIiwic3ViIjozMDAwMDAwMH0.rnB0Ba1hIzPmOfldo8cVJbjspY0g3iy6XSQilv88mJI",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"count\": 1,\n    \"scale\": 0,\n    \"q\": \"accepted\"\n}"
+				},
+				"url": {
+					"raw": "{{resty}}/waf/module/counter",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"module",
+						"counter"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF限流器]/waf/module/limiter",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xMjcuMC4wLjFcL3YxXC91c2VyXC9zaWduaW5cL2FjY291bnQiLCJpYXQiOjE1OTExNDcyNDgsImV4cCI6MTg1ODk4NzI0OCwibmJmIjoxNTkxMTQ3MjQ4LCJqdGkiOiJIdG82aEpuemlRS0FtT2pOIiwic3ViIjozMDAwMDAwMH0.rnB0Ba1hIzPmOfldo8cVJbjspY0g3iy6XSQilv88mJI",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"count\": 1,\n    \"scale\": 0,\n    \"q\": \"\"\n}"
+				},
+				"url": {
+					"raw": "{{resty}}/waf/module/limiter",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"module",
+						"limiter"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
