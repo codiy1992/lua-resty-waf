@@ -77,11 +77,6 @@ function _M.reload_config()
                     goto next
                 end
                 -- validate by
-                if comm.in_array(module, {'limiter', 'counter'}) then
-                    if value['by'] == nil or type(value['by']) ~= 'string' or value['by'] == '' then
-                        goto next
-                    end
-                end
                 if comm.in_array(module, {'filter'}) then
                     if value['by'] ~= nil and type(value['by']) ~= 'string' then
                         goto next

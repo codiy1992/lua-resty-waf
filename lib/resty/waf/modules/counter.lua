@@ -145,4 +145,5 @@ function _M.query()
     end
     return require('cjson').encode(data)
 end
+
 return _M

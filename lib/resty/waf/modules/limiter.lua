@@ -92,11 +92,18 @@ function _M.query()
             local total = limiter:get(v)
             if total ~= nil then
                 local time,matcher, by, key = v:match"^([^:]+):([^;]+);(.+):([^:]*)$"
+                if key == nil then
+                    time, matcher = v:match"^([^:]+):([^;]+);$";
+                end
                 if data[time] == nil then data[time] = {} end
                 if data[time][matcher] == nil then data[time][matcher] = {} end
-                if data[time][matcher][by] == nil then data[time][matcher][by] = {} end
-                data[time][matcher][by][key] = total
-            end
+                if by ~= nil and key ~= nil then
+                    if data[time][matcher][by] == nil then data[time][matcher][by] = {} end
+                    data[time][matcher][by][key] = total
+                else
+                    data[time][matcher] = total
+                end
+           end
         end
     else
         if inputs['key'] ~= nil and type(inputs['key']) == 'string' then
