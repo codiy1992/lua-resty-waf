@@ -17,6 +17,7 @@ function _M.run(config)
 
     local matcher_list = config.matchers
 
+    local keys = {}
     for i, rule in ipairs( config.modules.limiter.rules ) do
         local enable = rule['enable']
         local matcher = matcher_list[ rule['matcher'] ]
@@ -25,6 +26,7 @@ function _M.run(config)
             local time = rule['time'] or 60
             local count = rule['count'] or 60
             local key = tostring(count) .. "/" .. tostring(time) .. ":" .. rule['matcher'] .. ";"
+            local fields = {}
             if rule['by'] ~= nil then
                 for by in string.gmatch(rule['by'], '[^,]+') do
                     if by == 'ip' then
@@ -32,33 +34,39 @@ function _M.run(config)
                         if client_ip == nil then
                             goto continue
                         end
-                        key = key ..'ip:'.. client_ip .. ';'
+                        fields['ip'] = "ip:" .. client_ip .. ';'
                     elseif by == 'uri' then
-                        key = key..'uri:'..ngx.var.uri .. ';'
+                        fields['uri'] = "uri:" .. ngx.var.uri .. ';'
                     elseif by == 'uid' then
                         local uid = comm.get_user_id()
                         if uid == 0 then
                             goto continue
                         end
-                        key = key..'uid:'.. uid .. ';'
+                        fields['uid'] = "uid:" .. uid .. ';'
                     elseif by == 'device' then
                         local device_id = comm.get_device_id()
                         if device_id == nil then
                             goto continue
                         end
-                        key = key..'device:'.. device_id .. ';'
+                        fields['device'] = "device:" .. device_id .. ';'
                     else
                         goto continue
                     end
                 end
+                for _, field in ipairs({'ip', 'uid', 'device', 'uri'}) do
+                    if fields[field] ~= nil then
+                        key = key .. fields[field]
+                    end
+                end
             end
 
-            key = string.gsub(key, "^(.*);$", "%1")
-            local count_now = limiter:get(key) or 0
-            if (count_now + 1) > tonumber(count) then
-                _M.response(config, rule)
-            else
-                limiter:incr( key, 1, 0, tonumber(time) )
+            if keys[key] == nil then
+                local count_now = limiter:get(key) or 0
+                if (count_now + 1) > tonumber(count) then
+                    _M.response(config, rule)
+                else
+                    keys[key] = limiter:incr( key, 1, 0, tonumber(time) )
+                end
             end
         end
         ::continue::
@@ -91,27 +99,54 @@ function _M.query()
             end
         end
     else
+        if inputs['key'] ~= nil and type(inputs['key']) == 'string' then
+            if comm.in_array(inputs['key'], {'ip', 'uid', 'device', 'uri'}) ~= true then
+                inputs['key'] = nil
+            end
+        end
+        local i = 0
         local keys = limiter:get_keys(scale)
-        for i,v in ipairs(keys) do
+        for _,v in ipairs(keys) do
             if inputs['q'] ~= nil and type(inputs['q']) == 'string' and inputs['q'] ~= '' then
                 if ngx.re.find(v, inputs['q'], 'isjo') == nil then
                     goto continue
                 end
             else
                 if i > 2048 then
-                    goto continue
+                    goto done
                 end
             end
-            local time,matcher, by, key = v:match"^([^:]+):([^;]+);(.+):([^:]*)$"
             local total = limiter:get(v)
             if total >= count then
+                local time,matcher, by, key = v:match"^([^:]+):([^;]+);(.+):([^:]*)$"
+                if key == nil then
+                    time, matcher = v:match"^([^:]+):([^;]+);$";
+                end
+                if inputs['key'] ~= nil then
+                    local state,time, group = v:match"^([^:]+):([^;]+);(.+)$"
+                    local from, to, err = ngx.re.find(group, inputs['key'] .. ":([^;]+);", 'isjo', nil, 1)
+                    if from ~= nil then
+                        key = string.sub(group, from, to)
+                        by = ngx.re.gsub(
+                            group,
+                            "(.*)" ..  inputs['key'] .. ":" .. key .. ";" .. "(.*)",
+                            "$1$2",
+                            "isjo"
+                        ) .. inputs['key']
+                    end
+                end
                 if data[time] == nil then data[time] = {} end
                 if data[time][matcher] == nil then data[time][matcher] = {} end
-                if data[time][matcher][by] == nil then data[time][matcher][by] = {} end
-                data[time][matcher][by][key] = total
+                if by ~= nil and key ~= nil then
+                    if data[time][matcher][by] == nil then data[time][matcher][by] = {} end
+                    data[time][matcher][by][key] = total
+                else
+                    data[time][matcher] = total
+                end
             end
             ::continue::
         end
+        ::done::
     end
     return require('cjson').encode(data)
 end

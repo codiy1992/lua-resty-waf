@@ -552,7 +552,7 @@ curl --location --request POST 'http://127.0.0.1/waf/list' \
 * 目前支持几个配置项, 
     * **`waf:config:matchers`**
     * **`waf:config:responses`**
-    * **`waf:config:moduules:manager.auth`**
+    * **`waf:config:moduules:manager:auth`**
     * **`waf:config:moduules:filter:rules`**
     * **`waf:config:moduules:limiter:rules`**
     * **`waf:config:moduules:counter:rules`**
