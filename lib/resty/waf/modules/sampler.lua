@@ -49,6 +49,7 @@ function _M.record(key, size, rate)
     rate = tonumber(rate)
     if size == nil then size = 10 end
     if rate == nil then rate = 25 end
+    if size < 1 or size > 100 then rate = 10 end
     if rate < 0 or rate > 100 then rate = 25 end
     local total = sampler:llen(key)
     if total ~= nil then
