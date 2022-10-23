@@ -29,7 +29,7 @@ function _M.run(config, state, prev_rule)
                 local count = rule['count'] or 60
                 key =  key .. "(" ..tostring(count) .. "/" .. tostring(time) .. ")"
             end
-            _M.record(key, rule['size'] or 10)
+            _M.record(key, rule['size'] or 10, rule['rate'] or 25)
             goto done
         end
     end
@@ -38,18 +38,23 @@ function _M.run(config, state, prev_rule)
         local matcher = matcher_list[ rule['matcher'] ]
         if enable == true and request_tester.test( matcher ) == true then
             local key =  state .. ":" .. rule['matcher']
-            _M.record(key, rule['size'] or 10)
+            _M.record(key, rule['size'] or 10, rule['rate'] or 25)
         end
     end
     ::done::
 end
 
-function _M.record(key, size)
+function _M.record(key, size, rate)
+    size = tonumber(size)
+    rate = tonumber(rate)
+    if size == nil then size = 10 end
+    if rate == nil then rate = 25 end
+    if rate < 0 or rate > 100 then rate = 25 end
     local total = sampler:llen(key)
     if total ~= nil then
         if total >= size then
-            local rand = math.random(100)
-            if rand <= 25 then
+            local rand = math.random(10000)
+            if rand <= 10000 - rate * 100 then
                 return
             end
         end
