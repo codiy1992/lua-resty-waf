@@ -15,6 +15,7 @@ http {
     lua_shared_dict list 10m;
     lua_shared_dict limiter 10m;
     lua_shared_dict counter 10m;
+    lua_shared_dict sampler 10m;
     init_worker_by_lua_block {
         if ngx.worker.id() == 0 then
             ngx.timer.at(0, require("resty.waf").init)
