@@ -27,6 +27,7 @@ http {
             "filter",
             "limiter",
             "counter",
+            "sampler",
         })
     }
 }
@@ -34,10 +35,13 @@ http {
 
 ## 1. 几个共享内存
 
+当可用内存不足时, 将自动覆盖最久未被使用的未过期key
+
 * `lua_shared_dict waf 32k;` 存放 waf 配置等信息
 * `lua_shared_dict list 10m;` 存放ip/device/uid名单, 用于提供`matcher`之外的匹配功能
 * `lua_shared_dict limiter 10m;` 存放请求频率限制信息
 * `lua_shared_dict counter 10m;` 存放请求次数统计信息
+* `lua_shared_dict sampler 10m;` 存放采样器的采样信息
 
 ## 2. 执行流程
 
@@ -49,7 +53,7 @@ http {
 配置由三大部分组成如下
 * `matchers` 一些匹配规则, 可在各模块间共用, 用于匹配特定请求
 * `responses` 自定义响应格式, 可在各模块间共用, 用于waf模块内的http响应
-* `modules` 模块配置, 包含 `filter`, `limiter`, `counter`, `manager` 四大模块
+* `modules` 模块配置, 包含 `manager`, `filter`, `limiter`, `counter`, `sampler` 五大模块
 
 ### 3.1 Matcher
 
@@ -125,6 +129,14 @@ http {
                 "0.0.0"
             ]
         }
+    },
+    "uid": { // 匹配 Authorization Bearer Token 的 sub 字段
+        "UID": {
+            "value": [
+                0
+            ],
+            "operator": "#"
+        }
     }
 }
 ```
@@ -144,7 +156,27 @@ http {
 }
 ```
 
-### 3.3 Filter 模块
+### 3.3 Manager 模块
+
+用于 waf 的管理, 提供一系列以 `/waf` 开头的路由, 需要通过 Basic Authorizaton 认证
+默认账号密码 `waf:TTpsXHtI5mwq` 或者指定头信息 `Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ==`
+
+可使用项目根目录下的`postman.json`导入postman进行使用
+
+| 路由 | METHOD | 用途 |
+|-|-|-|
+|`/waf/status`| GET | 获取状态信息 |
+|`/waf/config`| GET | 获取当前配置 |
+|`/waf/config`| POST | 临时变更配置| 在nginx重启或执行`/waf/config/reload` 后**失效** |
+|`/waf/config/reload`| POST | 重载配置, 将使`/waf/config`提交的临时配置**失效** |
+|`/waf/list`| GET | 查看当前`list`中的名单及其ttl |
+|`/waf/list`| POST | 临时增加/修改名单, 在nginx重启或执行`/waf/list/reload`后**失效** |
+|`/waf/list/reload`| POST | 重载名单配置, 将**覆盖**`/waf/list`提交的临时配置 |
+|`/waf/module/limiter`| GET | 查询请求频次限制器情况 |
+|`/waf/module/counter`| GET | 查询请求计数器统计情况 |
+|`/waf/module/sampler`| GET | 查询采集器里的采样数据 |
+
+### 3.4 Filter 模块
 
 用于过滤请求,流程如下
 * `matcher`匹配上的请求, 执行放行`accept`或者拒绝`block`操作
@@ -211,7 +243,7 @@ http {
 }
 ```
 
-### 3.4 limiter 模块
+### 3.5 Limiter 模块
 
 用于请求频率限制,对于匹配`matcher`的请求, 可基于`ip`,`uri`,`uid`,`device`及其组合建立频率控制规则
 
@@ -249,12 +281,12 @@ curl --location --request GET 'http://127.0.0.1/waf/module/limiter' \
     "count": 1, // 请求数量 >= 1
     "scale": 1024, // 数据规模设置为0可取全部统计数据,默认1024
     "q": "", // 查询匹配, 可以是字符串或者正则表达式
-    "keys": [], // 指定查询特定key, 当指定此参数时, 参数q将失效
+    "key": "" // 指定要查看的维度(ip, uri, uid, device)
 }'
 ```
 ![](https://s3.codiy.net/repo/lua-resty-waf/19154731.png?d=200x200)
 
-### 3.5 counter 模块
+### 3.6 Counter 模块
 
 统计请求次数,根据 `ip`, `uri`, `uid` `device`及其任意组合如`ip,uri`, `uri,ip`,来统计请求次数
 
@@ -288,198 +320,243 @@ curl --location --request GET 'http://127.0.0.1/waf/module/counter' \
     "count": 1, // 请求数量 >= 1
     "scale": 1024, // 数据规模设置为0可取全部统计数据,默认1024
     "q": "", // 查询匹配, 可以是字符串或者正则表达式
-    "keys": [], // 指定查询特定key, 当指定此参数时, 参数q将失效
+    "key": "" // 指定要查看的维度(ip, uri, uid, device)
 }'
 ```
 ![](https://s3.codiy.net/repo/lua-resty-waf/19155058.png?d=200x200)
 
-### 3.6 manager 模块
+### 3.7 Sampler 模块
 
-用于 waf 的管理, 提供一系列以 `/waf` 开头的路由, 需要通过 Basic Authorizaton 认证
-默认账号密码 `waf:TTpsXHtI5mwq` 或者指定头信息 `Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ==`
+采样器, 模块支持两个内置的额外 matcher: `filtered`, `limited` 即匹配被过滤或限制的请求, 也可根据其他 matcher 自定义规则.
 
-| 路由 | METHOD | 用途 |
-|-|-|-|
-|`/waf/status`| GET | 获取状态信息 |
-|`/waf/config`| GET | 获取当前配置 |
-|`/waf/config`| POST | 临时变更配置| 在nginx重启或执行`/waf/config/reload` 后**失效** |
-|`/waf/config/reload`| POST | 重载配置, 将使`/waf/config`提交的临时配置**失效** |
-|`/waf/list`| GET | 查看当前`list`中的名单及其ttl |
-|`/waf/list`| POST | 临时增加/修改名单, 在nginx重启或执行`/waf/list/reload`后**失效** |
-|`/waf/list/reload`| POST | 重载名单配置, 将**覆盖**`/waf/list`提交的临时配置 |
-|`/waf/module/counter`| GET | 查询请求计数器统计情况 |
-|`/waf/module/limiter`| GET | 查询请求频次限制器情况 |
+模块默认配置如下:
+```json
+{
+    "rules": [
+        {
+            "rate": 25, // 采样率,当达集数据集到size时,依据rate以firt-in-first-out规则替换原有数据
+            "size": 10,
+            "matcher": "filtered",
+            "enable": false
+        },
+        {
+            "rate": 25, // 采样率,当达集数据集到size时,依据rate以firt-in-first-out规则替换原有数据
+            "size": 10,
+            "matcher": "limited",
+            "enable": false
+        }
+    ],
+    "enable": true
+}
+```
 
-### 3.7 完整的默认配置
+使用接口 `/waf/module/sampler` 获取采样数据
+
+```shell
+curl --location --request GET '127.0.0.1:8080/waf/module/sampler' \
+--header 'Authorization: Basic d2FmOlRUcHNYSHRJNW13cQ==' \
+--data-raw '{
+    "q": "", // 查询字符串
+    "all": false, // 是否输出所有采样数据(单一采样规则下的), 默认true
+    "pop": false // 取出采样时候是否清空采样队列, 默认true
+}'
+```
+
+### 3.8 完整的默认配置
 
 ```json
 {
     "matchers": {
-        "attack_sql": {
-            "Args": {
-                "operator": "≈",
-                "name": ".*",
-                "value": "select.*from"
-            }
-        },
         "attack_file_ext": {
             "URI": {
-                "value": "\\.(htaccess|bash_history|ssh|sql)$",
-                "operator": "≈"
+                "operator": "≈",
+                "value": "\\.(htaccess|bash_history|ssh|sql)$"
             }
         },
-        "any": {},
-        "attack_agent": {
-            "UserAgent": {
-                "value": "(nmap|w3af|netsparker|nikto|fimap|wget)",
-                "operator": "≈"
+        "app_version": {
+            "Header": {
+                "value": [
+                    "0.0.0"
+                ],
+                "name": "x-app-version",
+                "operator": "#"
             }
         },
         "app_id": {
             "Header": {
-                "operator": "#",
+                "value": [
+                    0
+                ],
                 "name": "x-app-id",
+                "operator": "#"
+            }
+        },
+        "trusted_referer": {
+            "Method": {
+                "operator": "#",
+                "value": {}
+            }
+        },
+        "uid": {
+            "UID": {
+                "operator": "#",
                 "value": [
                     0
                 ]
             }
         },
-        "method_post": {
-            "Method": {
-                "value": "(put|post|delete)",
+        "attack_agent": {
+            "UserAgent": {
+                "operator": "≈",
+                "value": "(nmap|w3af|netsparker|nikto|fimap|wget)"
+            }
+        },
+        "any": {},
+        "attack_sql": {
+            "Args": {
+                "value": "select.*from",
+                "name": ".*",
                 "operator": "≈"
-            }
-        },
-        "app_version": {
-            "Header": {
-                "operator": "#",
-                "name": "x-app-version",
-                "value": [
-                    "0.0.0"
-                ]
-            }
-        },
-        "trusted_referer": {
-            "Method": {
-                "value": {},
-                "operator": "#"
             }
         },
         "wan": {
             "IP": {
-                "value": "(10.|192.168|172.1[6-9].|172.2[0-9].|172.3[01].).*",
-                "operator": "!≈"
+                "operator": "!≈",
+                "value": "(10.|192.168|172.1[6-9].|172.2[0-9].|172.3[01].).*"
+            }
+        },
+        "post": {
+            "Method": {
+                "operator": "≈",
+                "value": "(put|post)"
             }
         }
     },
     "responses": {
         "403": {
-            "status": 403,
+            "body": "{\"code\":403, \"message\":\"Forbidden\"}",
             "mime_type": "application/json",
-            "body": "{\"code\":\"403\", \"message\":\"403 Forbidden\"}"
+            "status": 403
         }
     },
     "modules": {
-        "manager": {
+        "sampler": {
             "enable": true,
+            "rules": [
+                {
+                    "enable": false,
+                    "rate": 25,
+                    "matcher": "filtered",
+                    "size": 10
+                },
+                {
+                    "enable": false,
+                    "rate": 25,
+                    "matcher": "limited",
+                    "size": 10
+                }
+            ]
+        },
+        "manager": {
             "auth": {
                 "pass": "TTpsXHtI5mwq",
                 "user": "waf"
-            }
-        },
-        "limiter": {
-            "rules": [
-                {
-                    "matcher": "any",
-                    "time": 60,
-                    "count": 60,
-                    "enable": false,
-                    "by": "ip",
-                    "code": 403
-                },
-                {
-                    "matcher": "any",
-                    "time": 60,
-                    "count": 10,
-                    "enable": false,
-                    "by": "ip,uri",
-                    "code": 403
-                }
-            ],
-            "enable": true
-        },
-        "counter": {
-            "rules": [
-                {
-                    "by": "ip",
-                    "matcher": "any",
-                    "time": 60,
-                    "enable": false
-                },
-                {
-                    "by": "ip,uri",
-                    "matcher": "any",
-                    "time": 60,
-                    "enable": false
-                }
-            ],
+            },
             "enable": true
         },
         "filter": {
+            "enable": true,
             "rules": [
                 {
-                    "matcher": "any",
-                    "enable": true,
+                    "action": "block",
                     "by": "ip:in_list",
-                    "action": "block",
+                    "enable": true,
+                    "matcher": "any",
                     "code": 403
                 },
                 {
-                    "matcher": "any",
-                    "enable": true,
+                    "action": "block",
                     "by": "device:in_list",
-                    "action": "block",
-                    "code": 403
-                },
-                {
-                    "matcher": "any",
                     "enable": true,
-                    "by": "uid:in_list",
-                    "action": "block",
+                    "matcher": "any",
                     "code": 403
                 },
                 {
-                    "code": 403,
+                    "action": "block",
+                    "by": "uid:in_list",
+                    "enable": true,
+                    "matcher": "any",
+                    "code": 403
+                },
+                {
+                    "enable": true,
+                    "action": "block",
                     "matcher": "attack_sql",
-                    "action": "block",
-                    "enable": true
+                    "code": 403
                 },
                 {
-                    "code": 403,
+                    "enable": true,
+                    "action": "block",
                     "matcher": "attack_file_ext",
-                    "action": "block",
-                    "enable": true
+                    "code": 403
                 },
                 {
-                    "code": 403,
+                    "enable": true,
+                    "action": "block",
                     "matcher": "attack_agent",
-                    "action": "block",
-                    "enable": true
+                    "code": 403
                 },
                 {
-                    "code": 403,
+                    "enable": false,
+                    "action": "block",
                     "matcher": "app_id",
-                    "action": "block",
-                    "enable": false
+                    "code": 403
                 },
                 {
-                    "code": 403,
-                    "matcher": "app_version",
+                    "enable": false,
                     "action": "block",
-                    "enable": false
+                    "matcher": "app_version",
+                    "code": 403
                 }
-            ],
-            "enable": true
+            ]
+        },
+        "limiter": {
+            "enable": true,
+            "rules": [
+                {
+                    "count": 60,
+                    "by": "ip",
+                    "enable": false,
+                    "code": 403,
+                    "time": 60,
+                    "matcher": "any"
+                },
+                {
+                    "count": 10,
+                    "by": "ip,uri",
+                    "enable": false,
+                    "code": 403,
+                    "time": 60,
+                    "matcher": "any"
+                }
+            ]
+        },
+        "counter": {
+            "enable": true,
+            "rules": [
+                {
+                    "enable": false,
+                    "by": "ip",
+                    "time": 60,
+                    "matcher": "any"
+                },
+                {
+                    "enable": false,
+                    "by": "ip,uri",
+                    "time": 60,
+                    "matcher": "any"
+                }
+            ]
         }
     }
 }
@@ -556,9 +633,11 @@ curl --location --request POST 'http://127.0.0.1/waf/list' \
     * **`waf:config:moduules:filter:rules`**
     * **`waf:config:moduules:limiter:rules`**
     * **`waf:config:moduules:counter:rules`**
+    * **`waf:config:moduules:sampler:rules`**
     * **`waf:config:moduules:filter`**(仅支持对`enable`进行设置)
     * **`waf:config:moduules:limiter`**(仅支持对`enable`进行设置)
     * **`waf:config:moduules:counter`**(仅支持对`enable`进行设置)
+    * **`waf:config:moduules:sampler`**(仅支持对`enable`进行设置)
 * 如在`redis`中执行命令 **`hset waf:config:moduules:counter enable false`**
 * 在 redis 配置后需执行 **`/waf/config/reload`** 将配置与默认配置进行合并,方可生效
 
