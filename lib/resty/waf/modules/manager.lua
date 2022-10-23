@@ -192,6 +192,10 @@ function _M.status_get()
                 ["free"] = ngx.shared.counter:free_space()/1024,
                 ["capacity"] = ngx.shared.counter:capacity()/1024,
             },
+            ["sampler"] = {
+                ["free"] = ngx.shared.sampler:free_space()/1024,
+                ["capacity"] = ngx.shared.sampler:capacity()/1024,
+            },
         }
     }
    return require('cjson').encode(data)
