@@ -30,8 +30,8 @@ local _M = {
         ["sampler"] = {
             ["enable"] = true,
             ["rules"] = {
-                {["matcher"] = 'filtered', ['size'] = 10, ["enable"] = false },
-                {["matcher"] = 'limited', ['size'] = 10, ["enable"] = false },
+                {["matcher"] = 'filtered', ['size'] = 10, ['rate'] = 25, ["enable"] = false },
+                {["matcher"] = 'limited', ['size'] = 10, ['rate'] = 25, ["enable"] = false },
             }
         },
         ["manager"] = {
