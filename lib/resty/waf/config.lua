@@ -27,6 +27,13 @@ local _M = {
                 {["matcher"] = 'any', ["by"] = "ip,uri", ["time"] = 60, ["enable"] = false },
             }
         },
+        ["sampler"] = {
+            ["enable"] = true,
+            ["rules"] = {
+                {["matcher"] = 'filtered', ['size'] = 10, ["enable"] = false },
+                {["matcher"] = 'limited', ['size'] = 10, ["enable"] = false },
+            }
+        },
         ["manager"] = {
             ["enable"] = true,
             ["auth"] = {
@@ -55,6 +62,12 @@ local _M = {
             ["Method"] = {
                 ['operator'] = "#",
                 ['value']= {},
+            },
+        },
+        ["uid"] = {
+            ["UID"] = {
+                ['operator'] = "#",
+                ['value']= {0},
             },
         },
         ["attack_sql"] = {

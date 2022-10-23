@@ -160,6 +160,7 @@ end
 
 function _M.response(config, rule)
     require('resty.waf.modules.counter').run(config, 'limited')
+    require('resty.waf.modules.sampler').run(config, 'limited', rule)
     local response_list = config.responses
     response = response_list[tostring(rule['code'] or nil)]
     if response ~= nil then

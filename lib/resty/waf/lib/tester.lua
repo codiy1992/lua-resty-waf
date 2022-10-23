@@ -125,6 +125,18 @@ function _M.test_ip( condition )
     return _M.test_var( condition['operator'], condition['value'], ipv4 )
 end
 
+function _M.test_uid( condition )
+    local jwt = require "resty.jwt"
+    local jwt_token = nil
+    local auth_header = ngx.var.http_Authorization
+    if auth_header then
+        _, _, jwt_token = string.find(auth_header, "Bearer%s+(.+)")
+    end
+    local jwt_obj = (jwt_token ~= nil and jwt:load_jwt(jwt_token) or nil)
+    local uid = jwt_obj ~= nil and jwt_obj.payload ~= nil and jwt_obj.payload.sub or 0
+    return _M.test_var( condition['operator'], condition['value'], uid )
+end
+
 function _M.test_ua( condition )
     local http_user_agent = ngx.var.http_user_agent;
     return _M.test_var( condition['operator'], condition['value'], http_user_agent )
@@ -219,6 +231,7 @@ tester["Args"] = _M.test_args
 tester["Referer"] = _M.test_referer
 tester["Host"] = _M.test_host
 tester["Header"] = _M.test_header
+tester["UID"] = _M.test_uid
 
 
 return _M

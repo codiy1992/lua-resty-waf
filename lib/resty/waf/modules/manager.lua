@@ -3,6 +3,7 @@ local _M = {}
 local comm = require "resty.waf.lib.comm"
 local limiter = require "resty.waf.modules.limiter"
 local counter = require "resty.waf.modules.counter"
+local sampler = require "resty.waf.modules.sampler"
 
 function _M.run(config)
     if config.modules.manager.enable ~= true then
@@ -42,8 +43,10 @@ function _M.config_set(config)
     if inputs == nil then comm.error(err) end
     local keys = {
         "matchers", "responses", "modules:manager:auth",
-        "modules:filter:rules", "modules:limiter:rules", "modules:counter:rules",
-        "modules:filter:enable", "modules:limiter:enable", "modules:counter:enable"
+        "modules:filter:rules", "modules:limiter:rules",
+        "modules:counter:rules", "modules:sampler:rules",
+        "modules:filter:enable", "modules:limiter:enable",
+        "modules:counter:enable", "modules:sampler:enable"
     }
     for i,key in pairs(keys) do
         local field = nil
@@ -83,7 +86,9 @@ function _M.config_set(config)
                     comm.error('Required rule.matcher in module: ' .. module)
                 end
                 if config['matchers'][value['matcher']] == nil then
-                    comm.error('Unexpected rule.matcher `' .. value['matcher'] ..'` found in module: ' .. module)
+                    if comm.in_array(value['matcher'], {'filtered', 'limited'}) ~= true then
+                        comm.error('Unexpected rule.matcher `' .. value['matcher'] ..'` found in module: ' .. module)
+                    end
                 end
                 -- validate by
                 if comm.in_array(module, {'filter'}) then
@@ -266,8 +271,9 @@ _M.routes = {
     { ['method'] = "GET", ["path"] = "/list", ['handle'] = _M.list_get},
     { ['method'] = "POST", ["path"] = "/list", ['handle'] = _M.list_set},
     { ['method'] = "POST", ["path"] = "/list/reload", ['handle'] = _M.list_reload},
-    { ['method'] = "GET", ["path"] = "/module/counter", ['handle'] = counter.query},
     { ['method'] = "GET", ["path"] = "/module/limiter", ['handle'] = limiter.query},
+    { ['method'] = "GET", ["path"] = "/module/counter", ['handle'] = counter.query},
+    { ['method'] = "GET", ["path"] = "/module/sampler", ['handle'] = sampler.query},
 }
 
 return _M

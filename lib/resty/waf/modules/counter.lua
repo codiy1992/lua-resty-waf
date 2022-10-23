@@ -75,7 +75,6 @@ function _M.run(config, state)
 end
 
 function _M.query()
-    local counter = ngx.shared.counter
     local data = {}
     local inputs, err = require('cjson.safe').decode(ngx.req.get_body_data() or '{}')
     if inputs == nil then comm.error(err) end

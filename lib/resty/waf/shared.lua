@@ -19,8 +19,10 @@ function _M.reload_config()
     redis.exec(function (rds, config)
         local keys = {
             "matchers", "responses", "modules:manager:auth",
-            "modules:filter:rules", "modules:limiter:rules", "modules:counter:rules",
-            "modules:filter", "modules:limiter", "modules:counter"
+            "modules:filter:rules", "modules:limiter:rules",
+            "modules:counter:rules", "modules:sampler:rules",
+            "modules:filter", "modules:limiter",
+            "modules:counter", "modules:sampler"
         }
         for i,key in pairs(keys) do
 
@@ -74,7 +76,9 @@ function _M.reload_config()
                     goto next
                 end
                 if config['matchers'][value['matcher']] == nil then
-                    goto next
+                    if comm.in_array(value['matcher'], {'filtered', 'limited'}) ~= true then
+                        goto next
+                    end
                 end
                 -- validate by
                 if comm.in_array(module, {'filter'}) then
