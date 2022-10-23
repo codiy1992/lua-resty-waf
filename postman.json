@@ -37,17 +37,20 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "X-Device-ID",
 						"value": "f14268d542f919d5",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "X-App-ID",
 						"value": "1",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					}
 				],
 				"body": {
@@ -98,17 +101,20 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "X-Device-ID",
 						"value": "f14268d542f919d5",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "X-App-ID",
 						"value": "4",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					}
 				],
 				"body": {
@@ -156,12 +162,14 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "X-Device-ID",
 						"value": "f14268d542f919d5",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "X-App-ID",
@@ -172,7 +180,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"responses\": {\n        \"403\": {\n            \"body\": \"{\\\"code\\\":\\\"403\\\", \\\"message\\\":\\\"403 Forbidden\\\"}\",\n            \"status\": 403,\n            \"mime_type\": \"application/json\"\n        },\n        \"503\": {}\n    },\n    \"matchers\": {\n        \"*\": {},\n        \"wan2\": {\n            \"IP\": {\n                \"operator\": \"!≈\",\n                \"value\": \"(10.|192.168|172.1[6-9].|172.2[0-9].|172.3[01].).*\"\n            }\n        },\n        \"waf\": {\n            \"URI\": {\n                \"value\": \"^/waf/\",\n                \"operator\": \"≈\"\n            }\n        }\n    },\n    \"modules\": {\n        \"filter\": {\n            \"rules\": [\n                {\n                    \"action\": \"block\",\n                    \"by\": \"ip:in_list\",\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"enable\": true\n                },\n                {\n                    \"action\": \"block\",\n                    \"by\": \"device:in_list\",\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"enable\": true\n                },\n                {\n                    \"action\": \"block\",\n                    \"by\": \"uid:in_list\",\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"enable\": true\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"attack_sql\"\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"attack_file_ext\"\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"attack_agent\"\n                },\n                {\n                    \"enable\": true,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"app_id\"\n                },\n                {\n                    \"enable\": false,\n                    \"action\": \"block\",\n                    \"code\": 403,\n                    \"matcher\": \"app_version\"\n                }\n            ],\n            \"enable\": true\n        },\n        \"limiter\": {\n            \"enable\": true,\n            \"rules\": [\n                {\n                    \"enable\": true,\n                    \"time\": 60,\n                    \"count\": 30,\n                    \"code\": 403,\n                    \"matcher\": \"any\",\n                    \"by\": \"ip\"\n                },\n                {\n                    \"enable\": true,\n                    \"time\": 60,\n                    \"count\": 10,\n                    \"code\": 503,\n                    \"matcher\": \"any\",\n                    \"by\": \"ip,uri\"\n                }\n            ]\n        },\n        \"counter\": {\n            \"enable\": true,\n            \"rules\": [\n                {\n                    \"matcher\": \"wan\",\n                    \"by\": \"ip,uri\",\n                    \"time\": 86400,\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"wan\",\n                    \"by\": \"ip\",\n                    \"time\": 86400,\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"waf\",\n                    \"by\": \"ip,uri\",\n                    \"time\": 60,\n                    \"enable\": true\n                }\n            ]\n        }\n    }\n}"
+					"raw": "{\n    \"modules\": {\n        \"sampler\": {\n            \"enable\": true,\n            \"rules\": [\n                {\n                    \"matcher\": \"filtered\",\n                    \"enable\": true,\n                    \"size\": 10\n                },\n                {\n                    \"matcher\": \"limited\",\n                    \"enable\": true,\n                    \"size\": 10\n                },\n                {\n                    \"matcher\": \"any\",\n                    \"enable\": true,\n                    \"size\": 10\n                }\n            ]\n        },\n        \"counter\": {\n            \"rules\": [\n                {\n                    \"by\": \"ip\",\n                    \"matcher\": \"any\",\n                    \"time\": 300,\n                    \"enable\": true\n                },\n                {\n                    \"by\": \"ip,uri\",\n                    \"matcher\": \"any\",\n                    \"time\": 300,\n                    \"enable\": true\n                },\n                {\n                    \"by\": \"uri,ip\",\n                    \"matcher\": \"any\",\n                    \"time\": 300,\n                    \"enable\": true\n                },\n                {\n                    \"by\": \"uri,ip,device\",\n                    \"matcher\": \"any\",\n                    \"time\": 300,\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"any\",\n                    \"time\": 86400,\n                    \"enable\": true\n                }\n            ],\n            \"enable\": true\n        },\n        \"limiter\": {\n            \"rules\": [\n                {\n                    \"count\": 60,\n                    \"enable\": false,\n                    \"time\": 60,\n                    \"code\": 403,\n                    \"matcher\": \"any\",\n                    \"by\": \"ip\"\n                },\n                {\n                    \"count\": 5,\n                    \"enable\": true,\n                    \"time\": 30,\n                    \"code\": 403,\n                    \"matcher\": \"any\",\n                    \"by\": \"ip,uri\"\n                },\n                {\n                    \"count\": 5,\n                    \"enable\": true,\n                    \"time\": 30,\n                    \"code\": 403,\n                    \"matcher\": \"any\",\n                    \"by\": \"uri,ip\"\n                },\n                {\n                    \"count\": 2,\n                    \"enable\": false,\n                    \"time\": 4,\n                    \"code\": 403,\n                    \"matcher\": \"any\"\n                }\n            ],\n            \"enable\": true\n        },\n        \"filter\": {\n            \"rules\": [\n                {\n                    \"enable\": true,\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"by\": \"ip:in_list\"\n                },\n                {\n                    \"enable\": true,\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"by\": \"device:in_list\"\n                },\n                {\n                    \"enable\": true,\n                    \"matcher\": \"any\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"by\": \"uid:in_list\"\n                },\n                {\n                    \"matcher\": \"attack_sql\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"attack_file_ext\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"attack_agent\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"enable\": true\n                },\n                {\n                    \"matcher\": \"app_id\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"enable\": false\n                },\n                {\n                    \"matcher\": \"app_version\",\n                    \"code\": 403,\n                    \"action\": \"block\",\n                    \"enable\": false\n                },\n                {\n                    \"matcher\": \"uid\",\n                    \"code\": 403,\n                    \"action\": \"accept\",\n                    \"enable\": true\n                }\n            ],\n            \"enable\": true\n        },\n        \"manager\": {\n            \"auth\": {\n                \"pass\": \"TTpsXHtI5mwq\",\n                \"user\": \"waf\"\n            },\n            \"enable\": true\n        }\n    },\n    \"responses\": {\n        \"403\": {\n            \"status\": 403,\n            \"body\": \"{\\\"code\\\":403, \\\"message\\\":\\\"Forbidden\\\"}\",\n            \"mime_type\": \"application/json\"\n        }\n    },\n    \"matchers\": {\n        \"any\": {},\n        \"attack_sql\": {\n            \"Args\": {\n                \"operator\": \"≈\",\n                \"name\": \".*\",\n                \"value\": \"select.*from\"\n            }\n        },\n        \"attack_file_ext\": {\n            \"URI\": {\n                \"operator\": \"≈\",\n                \"value\": \"\\\\.(htaccess|bash_history|ssh|sql)$\"\n            }\n        },\n        \"attack_agent\": {\n            \"UserAgent\": {\n                \"operator\": \"≈\",\n                \"value\": \"(nmap|w3af|netsparker|nikto|fimap|wget)\"\n            }\n        },\n        \"app_id\": {\n            \"Header\": {\n                \"operator\": \"#\",\n                \"name\": \"x-app-id\",\n                \"value\": [\n                    0\n                ]\n            }\n        },\n        \"app_version\": {\n            \"Header\": {\n                \"operator\": \"#\",\n                \"name\": \"x-app-version\",\n                \"value\": [\n                    \"0.0.0\"\n                ]\n            }\n        },\n        \"trusted_referer\": {\n            \"Method\": {\n                \"operator\": \"#\",\n                \"value\": {}\n            }\n        },\n        \"wan\": {\n            \"IP\": {\n                \"operator\": \"!≈\",\n                \"value\": \"(10.|192.168|172.1[6-9].|172.2[0-9].|172.3[01].).*\"\n            }\n        },\n        \"post\": {\n            \"Method\": {\n                \"operator\": \"≈\",\n                \"value\": \"(put|post)\"\n            }\n        }\n    }\n}"
 				},
 				"url": {
 					"raw": "{{resty}}/waf/config",
@@ -215,7 +223,8 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					}
 				],
 				"body": {
@@ -267,7 +276,8 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					}
 				],
 				"body": {
@@ -315,12 +325,13 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"127.0.0.1\": 600,\n    \"30000000\": 500,\n    \"f14268d542f919d5\": 60,\n    \"fan29snd19ns29s\": 2322,\n    \"asd-bbisd230-sad932-a299\": 1392\n}"
+					"raw": "{\n    \"127.0.0.1\": 600,\n    \"30000000\": 500,\n    \"f14268d542f919d5\": 600,\n    \"fan29snd19ns29s\": 2322,\n    \"asd-bbisd230-sad932-a299\": 1392\n}"
 				},
 				"url": {
 					"raw": "{{resty}}/waf/list",
@@ -363,7 +374,8 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					}
 				],
 				"body": {
@@ -415,7 +427,8 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "Authorization",
@@ -426,7 +439,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"count\": 1,\n    \"scale\": 0,\n    \"q\": \"accepted\"\n}"
+					"raw": "{\n    \"count\": 1,\n    \"scale\": 0,\n    \"q\": \"\",\n    \"key\": \"device\"\n}"
 				},
 				"url": {
 					"raw": "{{resty}}/waf/module/counter",
@@ -473,7 +486,8 @@
 					{
 						"key": "Accept-Language",
 						"value": "en",
-						"type": "text"
+						"type": "text",
+						"disabled": true
 					},
 					{
 						"key": "Authorization",
@@ -495,6 +509,65 @@
 						"waf",
 						"module",
 						"limiter"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[WAF采样器]/waf/module/sampler",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "waf",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "TTpsXHtI5mwq",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xMjcuMC4wLjFcL3YxXC91c2VyXC9zaWduaW5cL2FjY291bnQiLCJpYXQiOjE1OTExNDcyNDgsImV4cCI6MTg1ODk4NzI0OCwibmJmIjoxNTkxMTQ3MjQ4LCJqdGkiOiJIdG82aEpuemlRS0FtT2pOIiwic3ViIjozMDAwMDAwMH0.rnB0Ba1hIzPmOfldo8cVJbjspY0g3iy6XSQilv88mJI",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"all\": false,\n    \"pop\": false,\n    \"q\": \"\"\n}"
+				},
+				"url": {
+					"raw": "{{resty}}/waf/module/sampler",
+					"host": [
+						"{{resty}}"
+					],
+					"path": [
+						"waf",
+						"module",
+						"sampler"
 					]
 				}
 			},
