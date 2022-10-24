@@ -9,29 +9,18 @@ function _M.run(config)
     if config.modules.manager.enable ~= true then
         return
     end
-
     local base_uri = '/waf'
-    if string.find(ngx.var.uri, base_uri) ~= 1 then
-        return
-    end
-
-    _M.auth_check(config.modules.manager.auth)
-
-    local uri = ngx.var.uri
     local method = ngx.req.get_method()
     local path = string.sub( ngx.var.uri, string.len( base_uri ) + 1 )
     for i,item in ipairs( _M.routes) do
         if method == item['method'] and path == item['path'] then
+            _M.auth_check(config.modules.manager.auth)
             ngx.header.content_type = "application/json"
             ngx.header.charset = "utf-8"
             ngx.say(item['handle'](config))
             ngx.exit(ngx.HTTP_OK)
         end
     end
-    ngx.status = ngx.HTTP_NOT_FOUND
-    ngx.header.content_type = "application/json"
-    ngx.say('{"code": 404, "message":"Not Found"}')
-    ngx.exit(ngx.HTTP_OK)
 end
 
 function _M.config_get(config)
