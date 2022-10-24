@@ -59,7 +59,7 @@ local _M = {
             },
         },
         ["trusted_referer"] = {
-            ["Method"] = {
+            ["Referer"] = {
                 ['operator'] = "#",
                 ['value']= {},
             },
