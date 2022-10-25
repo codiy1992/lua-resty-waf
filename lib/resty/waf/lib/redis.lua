@@ -9,11 +9,11 @@ if host == nil then
     if f ~= nil then
         local content = f:read("*all")
         f:close()
-        _,_,host = string.find(content, "REDIS_HOST=([^%s]+)")
-        _,_,port = string.find(content, "REDIS_PORT=([^%s]+)")
-        _,_,database = string.find(content, "REDIS_DB=([^%s]+)")
+        _,_,host = string.find(content, "%sREDIS_HOST=([^%s]+)")
+        _,_,port = string.find(content, "%sREDIS_PORT=([^%s]+)")
+        _,_,database = string.find(content, "%sREDIS_DB=([^%s]+)")
         if database == nil then
-            _,_,database = string.find(content, "REDIS_DATABASE=([^%s]+)")
+            _,_,database = string.find(content, "%sREDIS_DATABASE=([^%s]+)")
         end
     end
 end

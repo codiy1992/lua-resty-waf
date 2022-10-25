@@ -2,7 +2,6 @@ local _M = {}
 
 local cjson = require("cjson")
 local cjson_safe = require("cjson.safe")
-local redis = require("resty.waf.lib.redis")
 local nkeys = require("table.nkeys")
 local comm = require "resty.waf.lib.comm"
 
@@ -15,6 +14,7 @@ function _M.get_config()
 end
 
 function _M.reload_config()
+    local redis = require("resty.waf.lib.redis")
     local config = require('resty.waf.config');
     redis.exec(function (rds, config)
         local keys = {
@@ -129,6 +129,7 @@ function _M.reload_config()
 end
 
 function _M.reload_list()
+    local redis = require("resty.waf.lib.redis")
     redis.exec(function (rds)
         local res, err = rds:zrange("waf:list", 0, -1, 'WITHSCORES');
         if err then
