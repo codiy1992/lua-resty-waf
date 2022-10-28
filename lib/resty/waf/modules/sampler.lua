@@ -62,12 +62,11 @@ function _M.record(key, size, rate)
     end
     ngx.req.read_body()
     data = {}
+    data['time'] = os.date('%Y-%m-%d %X')
     data['uri'] = ngx.var.uri
     data['http'] = ngx.req.http_version()
     data['method'] = ngx.req.get_method()
     data['headers'] = ngx.req.get_headers()
-    data['agent'] = ngx.var.http_user_agent or ''
-    data['referer'] = ngx.var.http_referer or ''
     data['ipv4'] = comm.get_client_ip() or ''
     data['uid'] = comm.get_user_id()
     data['device'] = comm.get_device_id() or ''
