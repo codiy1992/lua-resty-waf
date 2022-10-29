@@ -118,10 +118,10 @@ function _M.query()
                 if ngx.re.find(v, inputs['q'], 'isjo') == nil then
                     goto continue
                 end
-            else
-                if i > 2048 then
-                    goto done
-                end
+            end
+            i = i + 1
+            if i > 10240 then
+                goto done
             end
             local total = limiter:get(v)
             if total >= count then
