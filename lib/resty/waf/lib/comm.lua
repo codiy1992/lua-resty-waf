@@ -28,8 +28,16 @@ function _M.get_user_id()
     if auth_header then
         _, _, jwt_token = string.find(auth_header, "Bearer%s+(.+)")
     end
+    local user_id = 0
     local jwt_obj = (jwt_token ~= nil and jwt:load_jwt(jwt_token) or nil)
-    return jwt_obj ~= nil and jwt_obj.payload ~= nil and jwt_obj.payload.sub or 0
+    if jwt_obj ~= nil and jwt_obj.payload ~= nil and type(jwt_obj.payload) == 'number' then
+        user_id = jwt_obj.payload
+    elseif jwt_obj ~= nil and jwt_obj.payload ~= nil and jwt_obj.payload.sub ~= nil then
+        user_id = jwt_obj.payload.sub
+    else
+        user_id = 0
+    end
+    return user_id
 end
 
 function _M.error(err)

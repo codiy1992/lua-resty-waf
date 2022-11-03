@@ -14,7 +14,6 @@ services:
       - ${PWD}:/data
       - ${PWD}/lib:/usr/local/openresty/nginx/lua
       - ${PWD}/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
-      - ${PWD}/sites.d:/usr/local/openresty/nginx/conf/sites.d
       - ${PWD}/.opmrc:/root/.opmrc
     privileged: true
     ports:
