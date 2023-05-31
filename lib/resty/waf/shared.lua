@@ -10,7 +10,7 @@ function _M.get_config()
     if config ~= nil then
         return cjson.decode(config)
     end
-    return nil
+    return require('resty.waf.config')
 end
 
 function _M.reload_config()
