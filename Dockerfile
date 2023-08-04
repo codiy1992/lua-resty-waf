@@ -29,9 +29,9 @@ RUN apt-get update && apt-get -y install openresty
 
 # ------------------------------------------------------------------------
 # Install openresty lua package: lua-resty-jwt
-# See: https://github.com/SkyLothar/lua-resty-jwt
+# See: https://github.com/cdbattags/lua-resty-jwt
 # ------------------------------------------------------------------------
-RUN opm get SkyLothar/lua-resty-jwt
+RUN opm get cdbattags/lua-resty-jwt=0.2.0
 
 # ------------------------------------------------------------------------
 # Supervisor Configuration

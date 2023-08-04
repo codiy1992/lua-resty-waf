@@ -803,5 +803,5 @@ docker exec -it resty opm upload
 * OpenResty LuaJIT2 [https://github.com/openresty/luajit2#tablenkeys](https://github.com/openresty/luajit2#tablenkeys)
 * Lua 手册[Lua 5.4](https://www.lua.org/manual/5.4/)
 * Resty 模块[OpenResty](https://openresty.org/cn/linux-packages.html)
-* Resty 模块[Lua-Resty-JWT](https://github.com/SkyLothar/lua-resty-jwt)
+* Resty 模块[Lua-Resty-JWT](https://github.com/cdbattags/lua-resty-jwt)
 
